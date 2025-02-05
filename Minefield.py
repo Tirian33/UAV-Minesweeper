@@ -27,19 +27,19 @@ class Minefield:
     
     #The selecting action - returns T/F depending on if you lived/died
     def select(self, x, y):
-        selCellValue = self.field[x,y]
+        selCellValue = self.field[x][y]
         #Check for death
         if selCellValue == -1:
             return False
         
         elif selCellValue == 0:
             #mark cell & then recursive calls
-            self.visibleField[x,y] = 0
+            self.visibleField[x][y] = 0
 
             for dx, dy in self.adjacents:
                 checkX, checkY = x + dx, y + dy
                 #Only recursive if: Cell is in the field & cell is not a mine
-                if 0 < checkX <= self.rows and 0 < checkY <= self.cols and self.field[checkX, checkY] != -1:
+                if 0 < checkX <= self.rows and 0 < checkY <= self.cols and self.field[checkX][checkY] != -1:
                     self.select(checkX,checkY)
         
         #Reveal non-0 mine adjacent cell
@@ -60,8 +60,8 @@ class Minefield:
         for dx, dy in self.adjacents:
             checkX, checkY = x + dx, y + dy
             #Only increment if: Cell is in the field & cell is not a mine
-            if 0 < checkX <= self.rows and 0 < checkY <= self.cols and self.field[checkX, checkY] != -1:
-                self.field[checkX, checkY] += 1
+            if 0 < checkX <= self.rows and 0 < checkY <= self.cols and self.field[checkX][checkY] != -1:
+                self.field[checkX][checkY] += 1
 
 
     def plantMine(self, safeX, safeY):
@@ -69,10 +69,10 @@ class Minefield:
             candidateX, candidateY = self.genMineCandidate()
 
             #No mines on safe 3x3 about start point
-            if not ( (safeX -1 <= candidateX <= safeX + 1) and (safeY -1 <= candidateY <= safeY + 1)):
+            if (safeX -1 <= candidateX <= safeX + 1) and (safeY -1 <= candidateY <= safeY + 1):
                 #No mines on same tile
-                if self.field[candidateX, candidateY] != -1:
-                    self.field[candidateX, candidateY] = -1
+                if self.field[candidateX][candidateY] != -1:
+                    self.field[candidateX][candidateY] = -1
                     self.incrementAdjacent(candidateX, candidateY)
                     
                     #success - now leave
@@ -84,9 +84,11 @@ class Minefield:
         for r in self.rows:
             for c in range(0, self.cols):
                 if c!= self.cols:
-                    outString += self.visibleField[c,r] + "\t"
+                    outString += self.visibleField[c][r] + "\t"
                 else:
-                    outString += self.visibleField[c,r] + "\n"
+                    outString += self.visibleField[c][r] + "\n"
 
 
+        print(outString)
+        print("\n VS \n")
         print(self.visibleField)
