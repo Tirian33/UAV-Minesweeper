@@ -1,94 +1,94 @@
-import math #for ceil()
+import math
 import random #for .randint
 
 class Minefield:
     """Abstraction of the minefield"""
-
-    field = [[]]
-    visibleField = [[]]
+    #Class variable - all instances use need this
     adjacents = [(-1,-1), (-1, 0), (-1, 1), (0, -1), (0,1), (1, -1), (1, 0), (1, 1)]
-    rows = 0
-    cols = 0
 
-    def __init__(self, rows, cols, mines, isAmount, firstX, firstY):
-        self.rows = rows-1
-        self.cols = cols-1
-        self.field = [[0]*cols]*rows
-        self.visibleField = [['?']*cols]*rows
+    def __init__(self, r = 10, c = 10, mines = 20):
+        #Instance variables
+        print(f"r {r} c {c} m {mines}")
+        self.rows = r
+        self.cols = c
+        self.field = [[0 for _ in range(r)] for _ in range(c)]
+        self.mineLoc = [row[:] for row in self.field] #Rather than importing copy, create slices of each row
 
-        if (isAmount):
-            for i in range(mines):
-                self.plantMine(firstX, firstY)
-        else:
-            for i in range(math.ceil(mines/100 * rows * cols)):
-                self.plantMine(firstX, firstY)
-        
-        self.select(firstX, firstY)
+        #Throwing away results, no logic changes on T/F
+        _ =self._plantMines(math.floor(mines/100 * r * c))
     
-    #The selecting action - returns T/F depending on if you lived/died
-    def select(self, x, y):
-        selCellValue = self.field[x][y]
-        #Check for death
-        if selCellValue == -1:
-            return False
-        
-        elif selCellValue == 0:
-            #mark cell & then recursive calls
-            self.visibleField[x][y] = 0
-
-            for dx, dy in self.adjacents:
-                checkX, checkY = x + dx, y + dy
-                #Only recursive if: Cell is in the field & cell is not a mine
-                if 0 < checkX <= self.rows and 0 < checkY <= self.cols and self.field[checkX][checkY] != -1:
-                    self.select(checkX,checkY)
-        
-        #Reveal non-0 mine adjacent cell
-        else:
-            self.visibleField[x,y] = selCellValue
-
-        return True
-
-    #This can be optimized to be selecting candidates from a set
-    def genMineCandidate(self):
-        xLoc = random.randint(0, self.cols)
-        yLoc = random.randint(0, self.rows)
-        return [xLoc, yLoc]
-
-    def incrementAdjacent(self, x, y):
-        #The 8 adjacent cells to a cell
-
+    #
+    def _incrementAdjacent(self, x: int, y: int) -> None:
+        """
+        Increment minecount for adjacent cells for given cell.
+        @param x The row of initial cell
+        @param y the column of initial cell
+        """
         for dx, dy in self.adjacents:
             checkX, checkY = x + dx, y + dy
             #Only increment if: Cell is in the field & cell is not a mine
-            if 0 < checkX <= self.rows and 0 < checkY <= self.cols and self.field[checkX][checkY] != -1:
+            if 0 <= checkX < self.rows and 0 <= checkY < self.cols and self.field[checkX][checkY] != -1:
                 self.field[checkX][checkY] += 1
 
 
-    def plantMine(self, safeX, safeY):
-        while(True):
-            candidateX, candidateY = self.genMineCandidate()
+    def _plantMines(self, numMines: int) -> bool:
+        """
+        Increment minecount for adjacent cells for given cell.
+        @param numMines Number of mines to place onto the field
+        @return Success/Fail of operation
+        """
+        #Safety
+        maxCells = self.rows * self.cols
+        #Bootleg case statement
+        if numMines == 0:
+            #Nothing is a mine
+            pass
+        elif numMines > maxCells:
+            #Idiot check
+            return False
+        elif numMines == maxCells:
+            #Everything is a mine
+            for r in range(self.rows):
+                for c in range(self.cols):
+                    self.field[r][c] +=1
+                    self.mineLoc[r][c] = 1
+                    self._incrementAdjacent(r, c)
+        else:
+            #Create a X,Y coordinate for all cells
+            mockField = [(r, c) for r in range(self.rows) for c in range(self.cols)]
+            print(f"There are {len(mockField)} cells. Placing {numMines} mines...")
+            minePositions = random.sample(mockField, numMines)
 
-            #No mines on safe 3x3 about start point
-            if (safeX -1 <= candidateX <= safeX + 1) and (safeY -1 <= candidateY <= safeY + 1):
-                #No mines on same tile
-                if self.field[candidateX][candidateY] != -1:
-                    self.field[candidateX][candidateY] = -1
-                    self.incrementAdjacent(candidateX, candidateY)
-                    
-                    #success - now leave
-                    break
+            #Place mines at random sample'd locations
+            for r, c in minePositions:
+                self.field[r][c] +=1
+                self.mineLoc[r][c] = 1
+                self._incrementAdjacent(r,c)
+        
+        return True
+
+    #Means of accessing data
+    def getUAVInfo(self) -> list[list[int]]:
+        return self.field
+
+    def getActualField(self) -> list[list[int]]:
+        return self.mineLoc
     
-    def printVision(self):
+    #Means of printing data
+    def stringUAV(self) -> str:
         outString = ""
-
-        for r in self.rows:
-            for c in range(0, self.cols):
-                if c!= self.cols:
-                    outString += self.visibleField[c][r] + "\t"
-                else:
-                    outString += self.visibleField[c][r] + "\n"
-
-
-        print(outString)
-        print("\n VS \n")
-        print(self.visibleField)
+        for r in range(self.rows):
+            for c in range(self.cols):
+                outString += str(self.field[r][c]) + " "
+            outString = outString[:-1] + "\n"
+        
+        return outString
+    
+    def stringMines(self) -> str:
+        outString = ""
+        for r in range(self.rows):
+            for c in range(self.cols):
+                outString += str(self.mineLoc[r][c]) + " "
+            outString = outString[:-1] + "\n"
+        
+        return outString
