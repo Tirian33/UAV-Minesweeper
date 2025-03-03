@@ -1,5 +1,6 @@
 from Minefield import * 
 from Solver import *
+from math import floor as fl
 
 def compareSolution(solution, GAattempt):
     """Makes pretty output for comparison"""
@@ -7,6 +8,11 @@ def compareSolution(solution, GAattempt):
     g = "\033[92m"
     r = "\033[91m"
     w = "\033[0m"
+    o = "\033[38;5;214m"
+    grey = "\033[38;5;145m"
+    fp = 0
+    fn = 0
+    cells = 0
 
     outString = ""
     lastBit = ""
@@ -15,39 +21,46 @@ def compareSolution(solution, GAattempt):
         r1Str = ""
         r2Str = ""
         for v1, v2 in zip(r1, r2):
-            r1Str += f"{v1} "
-            r2Str += f"{v2} "
+            cells +=1
+
+            r1Str += f"{grey}{v1}{w} " if v1 == 0 else f"{o}{v1}{w} "
+            r2Str += f"{grey}{v2}{w} " if v2 == 0 else f"{o}{v2}{w} "
 
             #Color version
             if v1 == v2:
                 lastBit += f"{g}{v1}{w} "
             else:
                 lastBit += f"{r}{v2}{w} "
+                if v2 == 0:
+                    fn +=1
+                else:
+                    fp += 1
         #spacing
         outString += r1Str + "\t" + r2Str
         outString = outString[:-1] + "\n"
         lastBit = lastBit[:-1] + "\n"
 
-    outString = outString + "\n" + lastBit
-    return outString
+    print(outString + "\n" + lastBit)
+    print(f"That yields:\nAccuracy: {(cells - fp -fn)} / {cells} {(cells - fp -fn)/cells :.4f}\nFP: {fp}\tFN: {fn}")
+    return fp + fn == 0
 
 def main():
-    rows = 4
-    cols = 4
-    mines = 4
+    rows = 20
+    cols = 25
+    mines = fl(20 * 25 / 2)
 
-    # mineField = Minefield(rows,cols,mines)
+    mineField = Minefield(rows,cols,mines)
 
-    # print(mineField.stringUAV())
-    # print(mineField.stringMines())
-    # print("\n\n\n")
+    print(mineField.stringUAV())
+    print(mineField.stringMines())
+    print("\n\n\n")
 
-    example1 = [[0,1,1,1], [1,2,2,2], [1,2,3,3],[1,1,2,2], [0,0,1,1]]
-    minesAt = [[0,0,0,1], [0,0,1,0], [1,0,0,1], [0,0,0,1], [0,0,0,0]]
+    # example1 = [[0,1,1,1], [1,2,2,2], [1,2,3,3],[1,1,2,2], [0,0,1,1]]
+    # minesAt = [[0,0,0,1], [0,0,1,0], [1,0,0,1], [0,0,0,1], [0,0,0,0]]
 
-    res = genetic_algorithm(popSize=11, generations=10000, mutationRate=0.1, toSolve=example1, numMines=mines)
+    res = genetic_algorithm(popSize=20, generations=10**4, mutationRate=0.075, toSolve=mineField.getUAVInfo(), numMines=mines)
 
-    print(compareSolution(minesAt, res))
+    _ = compareSolution(mineField.getActualField(), res)
 
 if __name__ == '__main__':
     main()

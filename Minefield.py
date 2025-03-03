@@ -10,7 +10,7 @@ class Minefield:
         #Instance variables
         self.rows = r
         self.cols = c
-        self.field = [[0 for _ in range(r)] for _ in range(c)]
+        self.field = [[0 for _ in range(c)] for _ in range(r)]
         self.mineLoc = [row[:] for row in self.field] #Rather than importing copy, create slices of each row
 
         #Throwing away results, no logic changes on T/F
