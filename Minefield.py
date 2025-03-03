@@ -8,14 +8,13 @@ class Minefield:
 
     def __init__(self, r = 10, c = 10, mines = 20):
         #Instance variables
-        print(f"r {r} c {c} m {mines}")
         self.rows = r
         self.cols = c
         self.field = [[0 for _ in range(r)] for _ in range(c)]
         self.mineLoc = [row[:] for row in self.field] #Rather than importing copy, create slices of each row
 
         #Throwing away results, no logic changes on T/F
-        _ =self._plantMines(math.floor(mines/100 * r * c))
+        _ = self._plantMines(mines)
     
     #
     def _incrementAdjacent(self, x: int, y: int) -> None:
@@ -42,9 +41,11 @@ class Minefield:
         #Bootleg case statement
         if numMines == 0:
             #Nothing is a mine
+            print("Error 1")
             pass
         elif numMines > maxCells:
             #Idiot check
+            print(f"Error 2: {numMines} > {maxCells}")
             return False
         elif numMines == maxCells:
             #Everything is a mine
@@ -56,7 +57,6 @@ class Minefield:
         else:
             #Create a X,Y coordinate for all cells
             mockField = [(r, c) for r in range(self.rows) for c in range(self.cols)]
-            print(f"There are {len(mockField)} cells. Placing {numMines} mines...")
             minePositions = random.sample(mockField, numMines)
 
             #Place mines at random sample'd locations
