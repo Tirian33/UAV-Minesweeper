@@ -76,10 +76,22 @@ class Minefield:
     
     #Means of printing data
     def stringUAV(self) -> str:
+        clrs = [
+            "\033[0m", #White
+            "\033[34m", #Blue
+            "\033[32m",  #Green
+            "\033[31m",  #Red
+            "\033[34;1m",  #Dark Blue
+            "\033[38;5;145m",  #Dark Red
+            "\033[36m",  #Cyan
+            "\033[30m",  #Black
+            "\033[37m",  #Gray
+            "\033[38;5;214m"  #Orange
+        ]
         outString = ""
         for r in range(self.rows):
             for c in range(self.cols):
-                outString += str(self.field[r][c]) + " "
+                outString += f"{clrs[self.field[r][c]]}{self.field[r][c]}{clrs[0]} "
             outString = outString[:-1] + "\n"
         
         return outString

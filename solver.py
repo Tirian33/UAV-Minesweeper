@@ -1,9 +1,13 @@
 import random
+import sys
+import time
 
 def genetic_algorithm(popSize = 10, generations = 100, mutationRate = 0.1, toSolve = [[1]], numMines = 1):
     #setup the Individual class properties
     Individual.boardToSolve = toSolve
     Individual.startingMines = numMines
+    mutRate = mutationRate
+    mutRampCD = 0
     
     #Create initial population
     pop = [Individual() for _ in range(popSize)]
@@ -16,23 +20,36 @@ def genetic_algorithm(popSize = 10, generations = 100, mutationRate = 0.1, toSol
         
         #Are we done?
         if pop[0].fitness == len(toSolve) * len(toSolve[0]):
-            print(f"Exiting early! Generation {gen} was a perfect solution!")
+            print(f"\nExiting early! Generation {gen} was a perfect solution!")
             return pop[0].chromTo2D()
         
         if pop[0].fitness > lastImprovement[0]:
-            print(f"New score of {pop[0].fitness}. It took {lastImprovement[1]} generations.")
             lastImprovement[0] = pop[0].fitness
             lastImprovement[1] = 0
+            mutRampCD = 0
+            mutRate = mutationRate
         else:
             lastImprovement[1] += 1
+
+            #Ramp up mutation rate if we don't get progress; 8% of generations
+            if lastImprovement[1] >= 0.08 * generations:
+                if mutRampCD == 0:
+                    mutRate = mutRate * 1.5
+                    if mutRate > 1:
+                        mutRate = 1
+                    #Wait for 1% of generations before intensifying
+                    mutRampCD = 0.01 * generations
+                else:
+                    mutRampCD -= 1
+            
 
 
         #Exit - local maxima
         if lastImprovement[1] > generations * 0.25:
-            print(f"Exiting early! No improvement after 1/4 of maximum generations. Local Maxima?")
+            print(f"\nExiting early! No improvement after 1/4 of maximum generations. Local Maxima?")
             return pop[0].chromTo2D()
         
-        #print(f"Generation {gen} best value is {pop[0].fitness}.")
+        fancyWrite(f"\rProcessing... Generation {gen} | Since last improvement {lastImprovement[1]} | Score {lastImprovement[0]} | MR {mutRate * 100 :.2f}% | MRCD {mutRampCD}")
         #Let the best 50% mate
         parents = pop[: popSize//2]
 
@@ -48,8 +65,10 @@ def genetic_algorithm(popSize = 10, generations = 100, mutationRate = 0.1, toSol
         
         #Mutations
         for indiv in nextGeneration:
-            if random.random() < mutationRate:
-                indiv.mutate()
+            if random.random() < mutRate:
+                a = indiv.mutate()
+                if not a:
+                    return indiv.chromTo2D()
         
         pop = nextGeneration
     
@@ -57,7 +76,9 @@ def genetic_algorithm(popSize = 10, generations = 100, mutationRate = 0.1, toSol
     pop.sort(key=lambda indiv: indiv.fitness, reverse=True)
     return pop[0].chromTo2D()
 
-
+def fancyWrite(fString) -> None:
+    sys.stdout.write(fString)
+    sys.stdout.flush()
 
 
 class Individual:
@@ -104,7 +125,7 @@ class Individual:
                     problems[r][c] = 1
                     #print(f"problem at ({r}, {c})")
         
-        #print(f"Score: {score}  Guess: \n{self.readable(testField)} Problem Matrix: \n{self.readable(problems)}")
+        self.problemBoard = problems
         return score
     
     def mate(self, other: "Individual") -> "Individual":
@@ -133,12 +154,49 @@ class Individual:
         child.fitness = child.calcFitness()
         return child
         
-    def mutate(self) -> bool:
+    def mutate(self, moveAdjChance=0.6) -> bool:
         """Change a random mine"""
         #Make a list and determine which value is getting changed
         mines = list(self.chromosome)
-        index = random.randint(0, len(mines) - 1)
+        possibilities = [(x) for x in range(len(mines))]
+        index = random.choice(possibilities)
 
+        #Find a problem gene, move it to an adjacent problem tile
+        if random.random() < moveAdjChance:
+            shiftCells = self.effectedCells[:4] + self.effectedCells[5:]
+
+            while True:
+                x,y = mines[index]
+                #Don't need to change correct genes pick another
+                if self.problemBoard[x][y] == 0:
+                    #not sure how we get here but okay?
+                    if len(possibilities) == 1:
+                        possibilities = [(x) for x in range(len(mines))]
+                        index = random.choice(possibilities)
+                        break
+                    possibilities.remove(index)
+                    index = random.choice(possibilities)
+                    continue
+
+                #Found a gene that isn't correct, move it adjacent
+                swapto = []
+                for dx, dy in shiftCells:
+                    checkX = x + dx
+                    checkY = y + dy
+                    #Inbounds, is also in error, doesn't have a mine on it already (NO DUPES!)
+                    if 0 <= checkX < len(self.boardToSolve) and 0 <= checkY < len(self.boardToSolve[0]) and self.problemBoard[checkX][checkY] == 1 and (checkX,checkY) not in self.chromosome:
+                        swapto.append((checkX,checkY))
+                
+                #Cellected cell is incorrect, but all neigbors havea mine on them so I can't move it adjacent - mutate other way
+                if len(swapto) == 0:
+                    break
+
+                #Now for every FP there is a FN adjacent & vice versa There WILL be a neighbor that is incorrect
+                mines[index] = random.choice(swapto)
+                self.chromosome = set(mines)
+                self.fitness = self.calcFitness()
+                return True
+        
         #Calculate all possible positions
         possibleMines = [
             (r, c) for r in range(len(self.boardToSolve)) for c in range(len(self.boardToSolve[0]))
@@ -154,6 +212,7 @@ class Individual:
         mines[index] = new_pos
         self.chromosome = set(mines)
         self.fitness = self.calcFitness()
+        return True
         
     def chromTo2D(self) -> list[list[int]]:
         field = [[0 for _ in range(len(self.boardToSolve[0]))] for _ in range(len(self.boardToSolve))]

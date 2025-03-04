@@ -8,8 +8,6 @@ def compareSolution(solution, GAattempt):
     g = "\033[92m"
     r = "\033[91m"
     w = "\033[0m"
-    o = "\033[38;5;214m"
-    grey = "\033[38;5;145m"
     fp = 0
     fn = 0
     cells = 0
@@ -23,8 +21,8 @@ def compareSolution(solution, GAattempt):
         for v1, v2 in zip(r1, r2):
             cells +=1
 
-            r1Str += f"{grey}{v1}{w} " if v1 == 0 else f"{o}{v1}{w} "
-            r2Str += f"{grey}{v2}{w} " if v2 == 0 else f"{o}{v2}{w} "
+            r1Str += f"{v1}{w} " if v1 == 0 else f"{r}{v1}{w} "
+            r2Str += f"{v2}{w} " if v2 == 0 else f"{r}{v2}{w} "
 
             #Color version
             if v1 == v2:
@@ -45,9 +43,9 @@ def compareSolution(solution, GAattempt):
     return fp + fn == 0
 
 def main():
-    rows = 20
-    cols = 25
-    mines = fl(20 * 25 / 2)
+    rows = 10
+    cols = 15
+    mines = fl(rows * cols * .20)
 
     mineField = Minefield(rows,cols,mines)
 
@@ -58,7 +56,7 @@ def main():
     # example1 = [[0,1,1,1], [1,2,2,2], [1,2,3,3],[1,1,2,2], [0,0,1,1]]
     # minesAt = [[0,0,0,1], [0,0,1,0], [1,0,0,1], [0,0,0,1], [0,0,0,0]]
 
-    res = genetic_algorithm(popSize=20, generations=10**4, mutationRate=0.075, toSolve=mineField.getUAVInfo(), numMines=mines)
+    res = genetic_algorithm(popSize=100, generations=10**4, mutationRate=0.075, toSolve=mineField.getUAVInfo(), numMines=mines)
 
     _ = compareSolution(mineField.getActualField(), res)
 
