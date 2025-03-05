@@ -17,11 +17,7 @@ class Minefield:
     
     #
     def _incrementAdjacent(self, x: int, y: int) -> None:
-        """
-        Increment minecount for adjacent cells for given cell.
-        @param x The row of initial cell
-        @param y the column of initial cell
-        """
+        """Increment minecount for adjacent cells for given cell."""
         for dx, dy in self.adjacents:
             checkX, checkY = x + dx, y + dy
             #Only increment if: Cell is in the field & cell is not a mine
@@ -30,11 +26,7 @@ class Minefield:
 
 
     def _plantMines(self, numMines: int) -> bool:
-        """
-        Increment minecount for adjacent cells for given cell.
-        @param numMines Number of mines to place onto the field
-        @return Success/Fail of operation
-        """
+        """Increment minecount for adjacent cells for given cell."""
         #Safety
         maxCells = self.rows * self.cols
         #Bootleg case statement
@@ -94,6 +86,7 @@ class Minefield:
         return outString
     
     def stringMines(self) -> str:
+        """Return mines as nice looking 2D array in a string."""
         outString = ""
         for r in range(self.rows):
             for c in range(self.cols):

@@ -1,7 +1,13 @@
 from Minefield import Minefield #Minefield abstraction
 from Individual import Individual #Population member
 import sys #Commandline args
+import signal #For ctrl + C handling
 import random #randomness
+
+def abortRun(signal, stackFrame):
+    #Ctrl + C handling
+    print("\n\nCtrl+C recived. Terminating...")
+    sys.exit(0)
 
 def compareSolution(solution, GAattempt):
     """Makes pretty output for comparison"""
@@ -143,7 +149,8 @@ def main():
         print("Usage: py script.py <rows> <cols> <mines> OR py script.py <Easy/Med/Hard>")
         sys.exit(1)
 
-    
+    #CTRL + C handler
+    signal.signal(signal.SIGINT, abortRun)
 
     mineField = Minefield(rows,cols,mines)
 

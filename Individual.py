@@ -23,6 +23,7 @@ class Individual:
         return set(selected)
     
     def calcFitness(self) -> int:
+        """Determines fitness score"""
         testField = [[0 for _ in range(len(self.boardToSolve[0]))] for _ in range(len(self.boardToSolve))]
         problems = [[0 for _ in range(len(self.boardToSolve[0]))] for _ in range(len(self.boardToSolve))]
         score = 0
@@ -36,13 +37,19 @@ class Individual:
                 if 0 <= updateX < len(self.boardToSolve) and 0 <= updateY < len(self.boardToSolve[0]):
                     testField[updateX][updateY] += 1
         
+        #Compare scores
         for r in range(len(testField)):
             for c in range(len(testField[0])):
                 if testField[r][c] == self.boardToSolve[r][c]:
                     score += 1
                 else:
+                    #Mark it a problem
                     problems[r][c] = 1
-        
+
+                    #If its an edge case 0 or 9 give extra penalty
+                    if self.boardToSolve[r][c] == 0 or self.boardToSolve[r][c] == 9:
+                        score -=2
+        #Update personal problemBoard
         self.problemBoard = problems
         return score
     
@@ -87,8 +94,8 @@ class Individual:
                 x,y = mines[index]
                 #Don't need to change correct genes pick another
                 if self.problemBoard[x][y] == 0:
-                    #not sure how we get here but okay?
                     if len(possibilities) == 1:
+                        #All mine placemnts have no neighbors that are wrong
                         possibilities = [(x) for x in range(len(mines))]
                         index = random.choice(possibilities)
                         break
@@ -105,9 +112,29 @@ class Individual:
                     if 0 <= checkX < len(self.boardToSolve) and 0 <= checkY < len(self.boardToSolve[0]) and self.problemBoard[checkX][checkY] == 1 and (checkX,checkY) not in self.chromosome:
                         swapto.append((checkX,checkY))
                 
-                #Cellected cell is incorrect, but all neigbors havea mine on them so I can't move it adjacent - mutate other way
-                if len(swapto) == 0:
+                #Selected cell is incorrect, but all neigbors havea mine on them so I can't move it adjacent - mutate other way
+                if not swapto:
                     break
+
+                #Local Maxima handler for diagnal issue
+                if len(swapto) >= 2:
+                    #Down left
+                    if (x-1, y) in swapto and (x, y+1) in swapto and (x-1, y+1) in mines and self.problemBoard[x-1][y+1]:
+                        #print(f"Changing {mines[index]} -> {(x+1, y)} & {mines[mines.index((x-1, y+1))]} -> {(x, y+1)}")
+                        mines[index] = (x-1, y)
+                        mines[mines.index((x-1, y+1))] = (x, y+1)
+                        self.chromosome = set(mines)
+                        self.fitness = self.calcFitness()
+                        return True
+
+                    #Down right
+                    elif (x+1, y) in swapto and (x, y+1) in swapto and (x+1, y+1) in mines and self.problemBoard[x+1][y+1]:
+                        #print(f"Changing {mines[index]} -> {(x+1, y)} & {mines[mines.index((x+1, y+1))]} -> {(x, y+1)}")
+                        mines[index] = (x+1, y)
+                        mines[mines.index((x+1, y+1))] = (x, y+1)
+                        self.chromosome = set(mines)
+                        self.fitness = self.calcFitness()
+                        return True
 
                 #Now for every FP there is a FN adjacent & vice versa There WILL be a neighbor that is incorrect
                 mines[index] = random.choice(swapto)
@@ -133,6 +160,7 @@ class Individual:
         return True
         
     def chromTo2D(self) -> list[list[int]]:
+        """Turn the set of mine locations into a 2D array; 1 = mine 0 = safe"""
         field = [[0 for _ in range(len(self.boardToSolve[0]))] for _ in range(len(self.boardToSolve))]
         mines = list(self.chromosome)
 
@@ -140,13 +168,3 @@ class Individual:
             field[x][y] = 1
         
         return field
-
-
-    def readable(self, param) -> str:
-        outString = ""
-        for r in range(len(param)):
-            for c in range(len(param[0])):
-                outString += str(param[r][c]) + " "
-            outString = outString[:-1] + "\n"
-        
-        return outString
