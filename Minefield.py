@@ -1,5 +1,4 @@
-import math
-import random #for .randint
+import random #randomness
 
 class Minefield:
     """Abstraction of the minefield"""
@@ -41,11 +40,9 @@ class Minefield:
         #Bootleg case statement
         if numMines == 0:
             #Nothing is a mine
-            print("Error 1")
             pass
         elif numMines > maxCells:
             #Idiot check
-            print(f"Error 2: {numMines} > {maxCells}")
             return False
         elif numMines == maxCells:
             #Everything is a mine

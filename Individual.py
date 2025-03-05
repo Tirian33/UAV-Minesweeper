@@ -1,85 +1,4 @@
-import random
-import sys
-import time
-
-def genetic_algorithm(popSize = 10, generations = 100, mutationRate = 0.1, toSolve = [[1]], numMines = 1):
-    #setup the Individual class properties
-    Individual.boardToSolve = toSolve
-    Individual.startingMines = numMines
-    mutRate = mutationRate
-    mutRampCD = 0
-    
-    #Create initial population
-    pop = [Individual() for _ in range(popSize)]
-    lastImprovement = [0, 0]
-
-    #Begin the generations
-    for gen in range(generations):
-        #Sort by fitness value
-        pop.sort(key=lambda indiv: indiv.fitness, reverse=True)
-        
-        #Are we done?
-        if pop[0].fitness == len(toSolve) * len(toSolve[0]):
-            print(f"\nExiting early! Generation {gen} was a perfect solution!")
-            return pop[0].chromTo2D()
-        
-        if pop[0].fitness > lastImprovement[0]:
-            lastImprovement[0] = pop[0].fitness
-            lastImprovement[1] = 0
-            mutRampCD = 0
-            mutRate = mutationRate
-        else:
-            lastImprovement[1] += 1
-
-            #Ramp up mutation rate if we don't get progress; 8% of generations
-            if lastImprovement[1] >= 0.08 * generations:
-                if mutRampCD == 0:
-                    mutRate = mutRate * 1.5
-                    if mutRate > 1:
-                        mutRate = 1
-                    #Wait for 1% of generations before intensifying
-                    mutRampCD = 0.01 * generations
-                else:
-                    mutRampCD -= 1
-            
-
-
-        #Exit - local maxima
-        if lastImprovement[1] > generations * 0.25:
-            print(f"\nExiting early! No improvement after 1/4 of maximum generations. Local Maxima?")
-            return pop[0].chromTo2D()
-        
-        fancyWrite(f"\rProcessing... Generation {gen} | Since last improvement {lastImprovement[1]} | Score {lastImprovement[0]} | MR {mutRate * 100 :.2f}% | MRCD {mutRampCD}")
-        #Let the best 50% mate
-        parents = pop[: popSize//2]
-
-        #The parents go into next generation to reduce slideback
-        nextGeneration = parents[:]
-
-        #Mate each of the parents with a random entity (can mate with self)
-        for i in range(len(parents)):
-            p1 = parents[i]
-            p2 = random.choice(parents)
-            child = p1.mate(p2)
-            nextGeneration.append(child)
-        
-        #Mutations
-        for indiv in nextGeneration:
-            if random.random() < mutRate:
-                a = indiv.mutate()
-                if not a:
-                    return indiv.chromTo2D()
-        
-        pop = nextGeneration
-    
-    print(f"No exact solution found after {generations} generations.")
-    pop.sort(key=lambda indiv: indiv.fitness, reverse=True)
-    return pop[0].chromTo2D()
-
-def fancyWrite(fString) -> None:
-    sys.stdout.write(fString)
-    sys.stdout.flush()
-
+import random #randomness
 
 class Individual:
     """Represents a member of the population"""
@@ -123,7 +42,6 @@ class Individual:
                     score += 1
                 else:
                     problems[r][c] = 1
-                    #print(f"problem at ({r}, {c})")
         
         self.problemBoard = problems
         return score
@@ -232,6 +150,3 @@ class Individual:
             outString = outString[:-1] + "\n"
         
         return outString
-            
-        
-         
