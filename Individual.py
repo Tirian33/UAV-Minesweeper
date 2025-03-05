@@ -48,7 +48,7 @@ class Individual:
 
                     #If its an edge case 0 or 9 give extra penalty
                     if self.boardToSolve[r][c] == 0 or self.boardToSolve[r][c] == 9:
-                        score -=2
+                        score -=1
         #Update personal problemBoard
         self.problemBoard = problems
         return score
