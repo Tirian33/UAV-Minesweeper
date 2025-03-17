@@ -143,6 +143,15 @@ def main():
     elif len(sys.argv) >= 4:
         try:
             rows, cols, mines = (int(sys.argv[1]),int(sys.argv[2]),int(sys.argv[3]))
+            
+            if cols < 1 or rows < 1:
+                print(f"Expected positive integers for rows and cols. Instead got r:{rows} c:{cols}")
+                sys.exit(1) 
+                           
+            if mines > rows*cols:
+                print(f"Too many mines! The board is full!")
+                mines = rows*cols
+            
         except ValueError:
             print("Usage Error: Expected Integers")
     else:
